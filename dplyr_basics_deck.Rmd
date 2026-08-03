@@ -1,0 +1,70 @@
+---
+title: "dplyr Basics deck code"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+```
+
+## Import table as meta
+
+Self-contained definition so the document knits anywhere. Swap in
+`read_csv()` if you keep the table as a file.
+
+```{r meta}
+meta <- tribble(
+  ~sample_id, ~group,     ~reads,  ~batch,
+  "S01",      "control",  812000,  1,
+  "S02",      "treated",  754000,  1,
+  "S03",      "control",  690000,  2,
+  "S04",      "treated",  933000,  2
+)
+
+# From a file instead:
+# meta <- read_csv("meta.csv")
+
+meta
+```
+
+## Card 2: select (keep columns)
+
+```{r select}
+select(meta, sample_id, group)
+```
+
+## Card 3: filter (keep rows)
+
+```{r filter}
+filter(meta, group == "treated")
+```
+
+## Card 4: mutate (build a column)
+
+```{r mutate}
+mutate(meta, reads_M = reads / 1e6)
+```
+
+## Card 5: arrange (sort rows)
+
+```{r arrange}
+arrange(meta, desc(reads))
+```
+
+## Card 6: group_by + summarise (one row per group)
+
+```{r summarise}
+meta |>
+  group_by(group) |>
+  summarise(mean_reads = mean(reads))
+```
+
+## Card 7: the pipe (chain verbs)
+
+```{r pipe}
+meta |>
+  filter(batch == 1) |>
+  select(sample_id, reads) |>
+  arrange(desc(reads))
+```
