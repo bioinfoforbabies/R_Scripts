@@ -1,0 +1,229 @@
+---
+title: "ggplot2 Heatmap Basics"
+subtitle: "A beginner-friendly gene expression example"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+---
+
+This example follows the card deck from data format → mapping → tiles → color → labels/theme using a simple gene-expression dataset.
+
+## 1. Load packages
+
+```r
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+```
+
+## 2. Start with a dummy wide gene-expression dataset
+
+Each row is a gene, and each sample is stored in its own column.
+
+```r
+wide_df <- data.frame(
+  gene = c("TP53", "BRCA1", "EGFR", "MYC", "VEGFA"),
+  S1 = c(8.2, 4.1, 6.5, 7.8, 3.9),
+  S2 = c(7.4, 5.3, 8.1, 6.9, 4.8),
+  S3 = c(6.1, 6.8, 7.2, 8.5, 5.6),
+  S4 = c(9.0, 5.9, 6.7, 7.1, 6.3),
+  S5 = c(8.6, 4.7, 8.4, 7.6, 5.1)
+)
+
+wide_df
+```
+
+The table looks like this:
+
+| gene | S1 | S2 | S3 | S4 | S5 |
+|---|---:|---:|---:|---:|---:|
+| TP53 | 8.2 | 7.4 | 6.1 | 9.0 | 8.6 |
+| BRCA1 | 4.1 | 5.3 | 6.8 | 5.9 | 4.7 |
+| EGFR | 6.5 | 8.1 | 7.2 | 6.7 | 8.4 |
+| MYC | 7.8 | 6.9 | 8.5 | 7.1 | 7.6 |
+| VEGFA | 3.9 | 4.8 | 5.6 | 6.3 | 5.1 |
+
+These values are dummy expression measurements for teaching purposes.
+
+## 3. Convert wide data to long data
+
+For `geom_tile()`, it is convenient to have one sample–gene combination per row.
+
+```r
+df <- wide_df |>
+  pivot_longer(
+    cols = -gene,
+    names_to = "sample",
+    values_to = "expression"
+  )
+
+df
+```
+
+The resulting structure is:
+
+| sample | gene | expression |
+|---|---|---:|
+| S1 | TP53 | 8.2 |
+| S2 | TP53 | 7.4 |
+| S3 | TP53 | 6.1 |
+| S4 | TP53 | 9.0 |
+| S5 | TP53 | 8.6 |
+| ... | ... | ... |
+
+## 4. Map the data with `aes()`
+
+A heatmap needs three mappings:
+
+- `x` → sample
+- `y` → gene
+- `fill` → the numeric value represented by color
+
+```r
+ggplot(
+  df,
+  aes(
+    x = sample,
+    y = gene,
+    fill = expression
+  )
+)
+```
+
+This only sets up the plot. No tiles are drawn yet.
+
+## 5. Draw the heatmap cells with `geom_tile()`
+
+```r
+ggplot(
+  df,
+  aes(
+    x = sample,
+    y = gene,
+    fill = expression
+  )
+) +
+  geom_tile()
+```
+
+Each row in the long-format dataset becomes one tile in the heatmap.
+
+## 6. Control the color scale
+
+`fill` maps expression values to color. A continuous gradient is appropriate here because `expression` is numeric.
+
+```r
+ggplot(
+  df,
+  aes(
+    x = sample,
+    y = gene,
+    fill = expression
+  )
+) +
+  geom_tile() +
+  scale_fill_gradient(
+    low = "#F8F4E9",
+    high = "#B9A5E3"
+  )
+```
+
+Lower expression values are shown with lighter colors and higher expression values with darker colors.
+
+## 7. Add labels and a theme
+
+```r
+ggplot(
+  df,
+  aes(
+    x = sample,
+    y = gene,
+    fill = expression
+  )
+) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(
+    low = "#F8F4E9",
+    high = "#B9A5E3"
+  ) +
+  labs(
+    title = "Gene expression heatmap",
+    x = "Sample",
+    y = "Gene",
+    fill = "Expression"
+  ) +
+  theme_minimal()
+```
+
+## Complete script
+
+```r
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+
+wide_df <- data.frame(
+  gene = c("TP53", "BRCA1", "EGFR", "MYC", "VEGFA"),
+  S1 = c(8.2, 4.1, 6.5, 7.8, 3.9),
+  S2 = c(7.4, 5.3, 8.1, 6.9, 4.8),
+  S3 = c(6.1, 6.8, 7.2, 8.5, 5.6),
+  S4 = c(9.0, 5.9, 6.7, 7.1, 6.3),
+  S5 = c(8.6, 4.7, 8.4, 7.6, 5.1)
+)
+
+df <- wide_df |>
+  pivot_longer(
+    cols = -gene,
+    names_to = "sample",
+    values_to = "expression"
+  )
+
+ggplot(
+  df,
+  aes(
+    x = sample,
+    y = gene,
+    fill = expression
+  )
+) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(
+    low = "#F8F4E9",
+    high = "#B9A5E3"
+  ) +
+  labs(
+    title = "Gene expression heatmap",
+    x = "Sample",
+    y = "Gene",
+    fill = "Expression"
+  ) +
+  theme_minimal()
+```
+
+## The basic pattern
+
+```r
+ggplot(data, aes(x, y, fill = value)) +
+  geom_tile()
+```
+
+For a typical gene-expression table:
+
+```text
+wide table
+    ↓
+pivot_longer()
+    ↓
+sample + gene + expression
+    ↓
+aes(x = sample, y = gene, fill = expression)
+    ↓
+geom_tile()
+    ↓
+color scale + labels + theme
+```
+
+## Note
+
+This is a plotting example, not a full gene-expression workflow. Real RNA-seq heatmaps are often made from transformed or normalized values rather than raw counts.
